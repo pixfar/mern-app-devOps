@@ -55,6 +55,7 @@ if [ "$1" = 'rollback' ]; then
   # Rollback Migrations
   echo "Rollback migrations"
   # Add your rollback command here
+  exit 0
 fi
 
 if [ "$1" = 'start' ]; then
@@ -76,6 +77,7 @@ if [ "$1" = 'start' ]; then
   echo "Starting the server..."
   # Add your command to start the server here
   su pixfar -c "node dist/main.js"
+  exit $?
 fi
 
 # Add any additional commands or configurations as needed

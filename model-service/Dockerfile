@@ -24,7 +24,7 @@ FROM node:20-alpine
 RUN apk add --no-cache bash gettext shadow util-linux
 
 WORKDIR /home/pixfar/app
-RUN addgroup -S pixfar && adduser -S pixfar -G pixfar
+RUN addgroup -S pixfar && adduser -S -s /bin/bash pixfar -G pixfar
 
 COPY --from=build --chown=pixfar:pixfar /app/dist ./dist
 COPY --from=prod-deps --chown=pixfar:pixfar /app/node_modules ./node_modules
@@ -32,7 +32,8 @@ COPY --chown=pixfar:pixfar package.json ./
 COPY --chown=pixfar:pixfar docker ./docker
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+    && chown pixfar:pixfar /home/pixfar/app
 
 EXPOSE 3000
 
