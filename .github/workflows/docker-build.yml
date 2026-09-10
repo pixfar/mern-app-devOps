@@ -13,6 +13,10 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [api-gateway, model-service, frontend, nginx]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,38 +31,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.CICD_GITHUB_TOKEN }}
 
-      - name: Build and Push api-gateway image
+      - name: Build and Push ${{ matrix.service }} image
         uses: docker/build-push-action@v5
         with:
-          context: ./api-gateway
-          file: ./api-gateway/Dockerfile
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.IMAGE_PREFIX }}-api-gateway:latest
-
-      - name: Build and Push model-service image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./model-service
-          file: ./model-service/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ env.IMAGE_PREFIX }}-model-service:latest
-
-      - name: Build and Push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ env.IMAGE_PREFIX }}-frontend:latest
-
-      - name: Build and Push nginx image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./nginx
-          file: ./nginx/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ env.IMAGE_PREFIX }}-nginx:latest
+          tags: ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest
