@@ -1,0 +1,25 @@
+version: '3.7'
+services:
+  rabbitmq:
+    image: "rabbitmq:3.12-management-alpine"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_log:/var/log/rabbitmq
+    ports:
+      - "5672:5672"
+    restart: always
+  mongodb:
+    image: mongo:6.0.8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: strongPassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - "mongo-data:/data/db"
+volumes:
+    mongo-data:
+    rabbitmq_data:
+    rabbitmq_log:
+
+    
