@@ -9,6 +9,8 @@ services:
       - mongodb
     env_file:
       - ./api-gateway/.env
+    volumes:
+      - app-data:/app/uploads  
   model-service:
     build: ./model-service
     depends_on:
@@ -41,7 +43,6 @@ services:
       - "mongo-data:/data/db"
 volumes:
     mongo-data:
+    app-data:
     rabbitmq_data:
     rabbitmq_log:
-
-    
