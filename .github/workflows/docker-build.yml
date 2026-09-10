@@ -2,6 +2,18 @@ name: Build and Push Docker Images
 
 on:
   workflow_dispatch:
+    inputs:
+      service:
+        description: "Image to build"
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - api-gateway
+          - model-service
+          - frontend
+          - nginx
 
 env:
   REGISTRY: ghcr.io
@@ -10,6 +22,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    if: inputs.service == 'all' || inputs.service == matrix.service
     permissions:
       contents: read
       packages: write
@@ -36,6 +49,6 @@ jobs:
         with:
           context: ./${{ matrix.service }}
           file: ./${{ matrix.service }}/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest
