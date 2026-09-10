@@ -1,44 +1,43 @@
-# Stage 1: Build
-FROM node:latest AS build
-# Copy app
-COPY . /home/pixfar/german-law-server
-WORKDIR /home/pixfar/
-RUN cd german-law-server \
-    && npm install \
-    && npm run build \
-    && rm -fr node_modules \
-    && npm install --only=production
+# Stage 1: install full deps (cached separately from source changes)
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Stage 2: Final Image
-FROM node:slim
+# Stage 2: build
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
 
-# Install packages
-RUN apt-get update && apt-get install -y gettext-base && apt-get clean
+# Stage 3: production-only deps (no devDependencies)
+FROM node:20-alpine AS prod-deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Setup docker-entrypoint
+# Stage 4: final runtime image
+FROM node:20-alpine
+
+# bash: entrypoint script | gettext: envsubst | shadow+util-linux: su/runuser
+RUN apk add --no-cache bash gettext shadow util-linux
+
+WORKDIR /home/pixfar/app
+RUN addgroup -S pixfar && adduser -S pixfar -G pixfar
+
+COPY --from=build --chown=pixfar:pixfar /app/dist ./dist
+COPY --from=prod-deps --chown=pixfar:pixfar /app/node_modules ./node_modules
+COPY --chown=pixfar:pixfar package.json ./
+COPY --chown=pixfar:pixfar docker ./docker
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-# Add non-root user
-RUN useradd -ms /bin/bash pixfar
-WORKDIR /home/pixfar/german-law-server
-COPY --from=build /home/pixfar/german-law-server .
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+    && mkdir -p uploads/bucket-category-image uploads/surprise-bucket-image uploads/user-profile-image \
+    && chown -R pixfar:pixfar uploads \
+    && chmod -R 777 uploads
 
-RUN chown -R pixfar:pixfar /home/pixfar
-# set project directory
-WORKDIR /home/pixfar/german-law-server
-
-RUN mkdir -p /home/pixfar/german-law-server/uploads/bucket-category-image
-RUN mkdir -p /home/pixfar/german-law-server/uploads/surprise-bucket-image
-RUN mkdir -p /home/pixfar/german-law-server/uploads/user-profile-image
-
-
-RUN chmod -R 777 /home/pixfar/german-law-server/uploads
-
-# Expose port
 EXPOSE 3000
-
-# Ensure entrypoint script is executable
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["start"]
