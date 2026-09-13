@@ -1,0 +1,52 @@
+version: '3.7'
+services:
+  # nginx:
+  #   image: ghcr.io/pixfar/mern-app-nginx:latest
+  api-gateway:
+    image: ghcr.io/pixfar/mern-app-api-gateway:latest
+    ports:
+      - "3001:3001"
+    depends_on:
+      - rabbitmq
+      - mongodb
+    env_file:
+      - ./api-gateway/.env
+    volumes:
+      - app-data:/app/uploads  
+  model-service:
+    image: ghcr.io/pixfar/mern-app-model-service:latest
+    depends_on:
+      - rabbitmq
+      - mongodb
+    env_file:
+      - ./model-service/.env   
+  frontend:
+    image: ghcr.io/pixfar/mern-app-frontend:latest
+    depends_on:
+      - api-gateway
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env     
+  rabbitmq:
+    image: "rabbitmq:3.12-management-alpine"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_log:/var/log/rabbitmq
+    ports:
+      - "5672:5672"
+    restart: always
+  mongodb:
+    image: mongo:6.0.8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: strongPassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - "mongo-data:/data/db"
+volumes:
+    mongo-data:
+    app-data:
+    rabbitmq_data:
+    rabbitmq_log:
