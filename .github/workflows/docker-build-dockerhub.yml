@@ -52,6 +52,9 @@ jobs:
           context: ./${{ matrix.service }}
           file: ./${{ matrix.service }}/Dockerfile
           platforms: linux/amd64
+          build-args: |
+            NEXT_PUBLIC_BACKEND_API_URL=${{ vars.NEXT_PUBLIC_BACKEND_API_URL }}
+            NEXT_PUBLIC_STRIPE_KEY=${{ vars.NEXT_PUBLIC_STRIPE_KEY }}
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:latest
