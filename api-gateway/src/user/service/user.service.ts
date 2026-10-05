@@ -78,8 +78,14 @@ export class UserService {
           profileImage: '',
         });
 
-        await newAdmin.save();
-        console.log('Admin user created successfully');
+        try {
+          await newAdmin.save();
+          console.log('Admin user created successfully');
+        } catch (error) {
+          // Another replica created the admin concurrently
+          if (error?.code !== 11000) throw error;
+          console.log('Admin user already exists');
+        }
       } else {
         console.log('Admin user already exists');
       }
